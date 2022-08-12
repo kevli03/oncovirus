@@ -77,6 +77,10 @@ def find_spec(file):
     print(f'Found {count} occurences.')
 
 def find_over():
+    task = input('enriched, depleted, or overall? (input E/D/O): ')
+    if (task not in 'EDO'):
+        print('Invalid input')
+
     input_files = []
     while (True):
         next = input('Name of an input file (preferably smallest first, N if done listing): ')
@@ -89,7 +93,7 @@ def find_over():
     data = []; file_num = len(input_files)
     for file in input_files:
         data.append(pd.read_csv(file))
-    sig_df = pd.DataFrame(columns=(list(data)[1:]))
+    sig_df = pd.DataFrame(columns=(list(data[0])[1:]))
 
     count_dict = {}; prot_list = []
     for index, row in data[0].iterrows():
@@ -100,9 +104,35 @@ def find_over():
             if (row['ID'] in count_dict):
                 count_dict[row['ID']] += 1
     
-    for ID in count_dict.copy():
-        if (count_dict[ID] != file_num):
-            del count_dict[ID]
+    for id in count_dict.copy():
+        if (count_dict[id] != file_num):
+            del count_dict[id]
+
+    LFC_dict = {}
+    if (task != 'O'):
+        for index, row in data[0].iterrows():
+            if (row['ID'] in count_dict):
+                LFC_dict[row['ID']] = row['LFC']
+
+        for i in range(1, file_num):
+            for index, row in data[i].iterrows():
+                if (row['ID'] in count_dict):
+                    if (LFC_dict[row['ID']] * row['LFC'] <= 0):
+                        LFC_dict[row['ID']] = 0
+    
+        for id in count_dict.copy():
+            if (LFC_dict[id] == 0):
+                del count_dict[id]
+
+        factor = 0
+        if (task == 'E'):
+            factor = 1
+        elif (task == 'D'):
+            factor = -1
+
+        for id in count_dict.copy():
+            if (LFC_dict[id] * factor <= 0):
+                del count_dict[id]
 
     for index, row in data[0].iterrows():
         if (row['ID'] in count_dict):

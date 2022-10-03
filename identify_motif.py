@@ -92,11 +92,8 @@ role_dict = {\
 'TRG_LysEnd_APsAcLL_1':'N/A', \
 'TRG_NES_CRM1_1':'leucine-rich nuclear export signal binding to CRM1 exportin protein'}
 
-def identify():
+def identify(todo):
     input_file = input('Name of input file: ')
-    motif_output_file = input('Name of output motif file: ')
-    stats_output_file = input('Name of output statistical file: ')
-    
     type_dict = {}
     for regex in motif_dict:
         type_dict[motif_dict[regex]] = 0
@@ -107,47 +104,95 @@ def identify():
     motif_df = pd.DataFrame(columns=(list(data) + extra_cols))          #first column has data
     # motif_df = pd.DataFrame(columns=(list(data)[1:] + extra_cols))    #else
 
-    for index, row in data.iterrows():
-        seq = row['protein']
-        motifs = {}
+    if (todo == 'N'):
+        motif_output_file = input('Name of output motif file: ')
+        stats_output_file = input('Name of output statistical file: ')
+        for index, row in data.iterrows():
+            seq = row['protein']
+            motifs = {}
 
-        for regex in motif_dict:
-            match = re.search(regex, seq)
-            if match:
-                sequence = re.findall(regex, seq)
-                for i in range(len(sequence)):
-                    if (type(sequence[i]) is tuple):
-                        sequence[i] = sequence[i][0]
+            for regex in motif_dict:
+                match = re.search(regex, seq)
+                if match:
+                    sequence = re.findall(regex, seq)
+                    for i in range(len(sequence)):
+                        if (type(sequence[i]) is tuple):
+                            sequence[i] = sequence[i][0]
+                        type_dict[motif_dict[regex]] += 1
+                    motifs[motif_dict[regex]] = sequence
+            
+            output_dict = {}
+            for col in (list(data)):            #first column has data
+            # for col in (list(data)[1:]):      #else
+                output_dict[col] = row[col]
+            
+            if (len(motifs) > 0):
+                motif += 1
+                for i in motifs:
+                    for j in motifs[i]:
+                        motif_df = motif_df.append((output_dict | {'has motif':'Yes', 'motif seq':j, 'motif':i, 'role':role_dict[i]}), ignore_index=True)
+                        # replace append with concat (deprecated)
+            else:
+                motif_df = motif_df.append((output_dict | {'has motif':'No', 'motif seq':'none', 'motif':'none', 'role':'none'}), ignore_index=True)
+            total += 1
+
+        motif_df.index = np.arange(1, len(motif_df) + 1)
+        motif_df.to_csv(motif_output_file)
+        total_sum = sum(list(type_dict.values()))
+        df2 = pd.DataFrame([type_dict]); df2 = df2.transpose()
+        df3 = pd.DataFrame([role_dict]); df3 = df3.transpose()
+        stats_df = pd.concat([df2, df3], axis = 1)
+        stats_df.to_csv(stats_output_file)
+        print()
+        print(f'Found {total_sum} total motifs out of {motif} peptides with motifs out of {total} total peptides.')
+
+    if (todo == 'F'):        
+        prot_output_file = input('Name of protein output statistical file: ')
+        pep_output_file = input('Name of peptide output statistical file: ')
+        prot_count_dict = {}; pep_count_dict = {}
+        for index, row in data.iterrows():
+            seq = row['protein']
+
+            for regex in motif_dict:
+                match = re.search(regex, seq)
+                if match:
+                    sequence = re.findall(regex, seq)
+                    for i in range(len(sequence)):
+                        if (str(row['Virus']) + ' - ' + str(row['gene_name'])) not in prot_count_dict:
+                            prot_count_dict[str(row['Virus']) + ' - ' + str(row['gene_name'])] = 1
+                        else:
+                            prot_count_dict[str(row['Virus']) + ' - ' + str(row['gene_name'])] += 1
+                        if (str(row['Virus']) + ' - ' + str(row['gene_name']) + ' - ' + str(row['protein'])) not in pep_count_dict:
+                            pep_count_dict[str(row['Virus']) + ' - ' + str(row['gene_name']) + ' - ' + str(row['protein'])] = 1
+                        else:
+                            pep_count_dict[str(row['Virus']) + ' - ' + str(row['gene_name']) + ' - ' + str(row['protein'])] += 1
+
+        sum_prot = sum(list(prot_count_dict.values()))
+        dfpr = pd.DataFrame([prot_count_dict]); dfpr = dfpr.transpose(); dfpr.to_csv(prot_output_file)
+        dfpe = pd.DataFrame([pep_count_dict]); dfpe = dfpe.transpose(); dfpe.to_csv(pep_output_file)
+        print()
+        print(f'Found {sum_prot} motifs.')
+
+    if (todo == 'A'):
+        output_file = input('Name of output statistical file: ')
+        for index, row in data.iterrows():
+            seq = row['protein']
+
+            for regex in motif_dict:
+                match = re.search(regex, seq)
+                if match:
                     type_dict[motif_dict[regex]] += 1
-                motifs[motif_dict[regex]] = sequence
-        
-        output_dict = {}
-        for col in (list(data)):            #first column has data
-        # for col in (list(data)[1:]):      #else
-            output_dict[col] = row[col]
-        
-        if (len(motifs) > 0):
-            motif += 1
-            for i in motifs:
-                for j in motifs[i]:
-                    motif_df = motif_df.append((output_dict | {'has motif':'Yes', 'motif seq':j, 'motif':i, 'role':role_dict[i]}), ignore_index=True)
-        else:
-            motif_df = motif_df.append((output_dict | {'has motif':'No', 'motif seq':'none', 'motif':'none', 'role':'none'}), ignore_index=True)
-        total += 1
 
-    motif_df.index = np.arange(1, len(motif_df) + 1)
-    motif_df.to_csv(motif_output_file)
-    total_sum = sum(list(type_dict.values()))
-    df2 = pd.DataFrame([type_dict])
-    df2 = df2.transpose()
-    df3 = pd.DataFrame([role_dict])
-    df3 = df3.transpose()
-    stats_df = pd.concat([df2, df3], axis = 1)
-    stats_df.to_csv(stats_output_file)
-    print()
-    print(f'Found {total_sum} total motifs out of {motif} peptides with motifs out of {total} total peptides.')
+        total = sum(list(type_dict.values()))
+        df2 = pd.DataFrame([type_dict]); df2 = df2.transpose()
+        df3 = pd.DataFrame([role_dict]); df3 = df3.transpose()
+        stats_df = pd.concat([df2, df3], axis = 1)
+        stats_df.to_csv(output_file)
+        print()
+        print(f'Found {total} motifs.')
 
 def main():
-    identify()
+    todo = input('normal or peptide/protein full count or abbreviated count? (N/F/A): ')
+    identify(todo)
 
 main()

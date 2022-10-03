@@ -36,8 +36,9 @@ def identify_sig(direction, LFC, q_value):
     sig_df = pd.DataFrame(columns=(list(data)[1:]))
 
     for index, row in data.iterrows():
-        if (row['Direction'] == direction and abs(float(row['LFC_1'])) > LFC and abs(float(row['LFC_2'])) > LFC and \
-            float(row['q_value_1']) < q_value and float(row['q_value_2']) < q_value):
+        if (row['Direction'] == direction and abs(float(row['LFC1'])) > LFC and abs(float(row['LFC2'])) > LFC and \
+            abs(float(row['LFC3'])) > LFC and float(row['Q_value_1']) < q_value and \
+            float(row['Q_value_2']) < q_value and float(row['Q_value_3'] < q_value)):
             sig += 1
             output_dict = {}
             for col in (list(data)[1:]):
@@ -49,6 +50,38 @@ def identify_sig(direction, LFC, q_value):
     sig_df.to_csv(output_file)
     print()
     print(f'Found {sig} significant peptides out of {total} total peptides.')
+
+def identify_enr_dep(task):
+    input_file = input('Name of input file: ')
+    output_file = input('Name of output file: ')
+
+    sig = 0; total = 0
+    data = pd.read_csv(input_file)
+    sig_df = pd.DataFrame(columns=(list(data)[1:]))
+
+    if (task == 'E'):
+        for index, row in data.iterrows():
+            if (float(row['LFC1']) > 0 and float(row['LFC2']) > 0 and float(row['LFC3']) > 0):
+                sig += 1
+                output_dict = {}
+                for col in (list(data)[1:]):
+                    output_dict[col] = row[col]
+                sig_df = sig_df.append(output_dict, ignore_index=True)
+            total += 1
+        print(f'Found {sig} enriched peptides out of {total} total peptides.')
+
+    elif(task == 'D'):
+        for index, row in data.iterrows():
+            if (float(row['LFC1']) < 0 and float(row['LFC2']) < 0 and float(row['LFC3']) < 0):
+                sig += 1
+                output_dict = {}
+                for col in (list(data)[1:]):
+                    output_dict[col] = row[col]
+                sig_df = sig_df.append(output_dict, ignore_index=True)
+            total += 1
+        print(f'Found {sig} depleted peptides out of {total} total peptides.')
+
+    sig_df.to_csv(output_file)
 
 def find_spec(file):
     spec_file = open(file, 'r')
@@ -64,7 +97,8 @@ def find_spec(file):
     sig_df = pd.DataFrame(columns=(list(data)[1:]))
 
     for index, row in data.iterrows():
-        if (row['ID'] in specs):
+        #if (row['ID'] in specs):
+        if (row['motif'] in specs):
             count += 1
             output_dict = {}
             for col in (list(data)[1:]):
@@ -151,15 +185,17 @@ def find_over():
 def main():
     todo = input('identify or find? (input I or F): ')
     if (todo == 'I'):
-        task = input('type or significance? (input T or S): ')
+        task = input('type, significance, or enriched/depleted? (input T/S/E/D): ')
         if (task == 'T'):
             pep_type = input('name of type?: ')
             identify_type(pep_type)
         elif (task == 'S'):
-            direction = int(input('direction?: '))
+            direction = (input('direction?: '))
             LFC = float(input('|LFC| > ?: '))
             q_value = float(input('q_value < ?: '))
             identify_sig(direction, LFC, q_value)
+        elif (task in 'ED'):
+            identify_enr_dep(task)
         else:
             print('Invalid input')
     elif (todo == "F"):

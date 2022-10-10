@@ -149,7 +149,8 @@ def identify(todo):
     if (todo == 'F'):        
         prot_output_file = input('Name of protein output statistical file: ')
         pep_output_file = input('Name of peptide output statistical file: ')
-        prot_count_dict = {}; pep_count_dict = {}
+        prot_pep_output_file = input('Name of peptide per protein output statistical file: ')
+        prot_count_dict = {}; pep_count_dict = {}; pep_per_prot_dict = {}
         for index, row in data.iterrows():
             seq = row['protein']
 
@@ -164,12 +165,17 @@ def identify(todo):
                             prot_count_dict[str(row['Virus']) + ' - ' + str(row['gene_name'])] += 1
                         if (str(row['Virus']) + ' - ' + str(row['gene_name']) + ' - ' + str(row['protein'])) not in pep_count_dict:
                             pep_count_dict[str(row['Virus']) + ' - ' + str(row['gene_name']) + ' - ' + str(row['protein'])] = 1
+                            if (str(row['Virus']) + ' - ' + str(row['gene_name'])) not in pep_per_prot_dict:
+                                pep_per_prot_dict[str(row['Virus']) + ' - ' + str(row['gene_name'])] = 1
+                            else:
+                                pep_per_prot_dict[str(row['Virus']) + ' - ' + str(row['gene_name'])] += 1
                         else:
                             pep_count_dict[str(row['Virus']) + ' - ' + str(row['gene_name']) + ' - ' + str(row['protein'])] += 1
 
         sum_prot = sum(list(prot_count_dict.values()))
         dfpr = pd.DataFrame([prot_count_dict]); dfpr = dfpr.transpose(); dfpr.to_csv(prot_output_file)
         dfpe = pd.DataFrame([pep_count_dict]); dfpe = dfpe.transpose(); dfpe.to_csv(pep_output_file)
+        dfpp = pd.DataFrame([pep_per_prot_dict]); dfpp = dfpp.transpose(); dfpp.to_csv(prot_pep_output_file)
         print()
         print(f'Found {sum_prot} motifs.')
 

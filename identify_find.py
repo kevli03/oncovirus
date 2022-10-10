@@ -97,8 +97,8 @@ def find_spec(file):
     sig_df = pd.DataFrame(columns=(list(data)[1:]))
 
     for index, row in data.iterrows():
-        #if (row['ID'] in specs):
-        if (row['motif'] in specs):
+        if (row['ID'] in specs):
+        #if (row['motif'] in specs):
             count += 1
             output_dict = {}
             for col in (list(data)[1:]):

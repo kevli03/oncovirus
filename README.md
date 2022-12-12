@@ -1,6 +1,6 @@
 # oncovirus
 
-# how to use
+how to use
 ```
   - place in same directory as files
   - use csv files
@@ -12,7 +12,7 @@
     - will ask for names of output files - just give basic names, the point is to move the data in these files to one central file
 ```
 
-# identify_motif.py - find motifs
+identify_motif.py - find motifs
 ```
   - bread and butter
   - input file should have data in the first column (i.e., not a column of 1, 2, 3, ...)
@@ -23,13 +23,13 @@
       - not that useful
 ```
       
-# identify_find.py - miscellaneous functions on csv sheets
+identify_find.py - miscellaneous functions on csv sheets
 ```
   - pretty much just an attempt to automate some of the more annoying functions
   - not that useful
 ```
   
-# fisher_motif.py - identify significantly enriched (not sure if also depleted) motifs between "populations"
+fisher_motif.py - identify significantly enriched (not sure if also depleted) motifs between "populations"
 ```  
   - fisher's exact test
 ```
